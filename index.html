@@ -160,6 +160,10 @@
       grid-template-columns: 1fr 1fr;
       gap: 1rem;
     }
+    .gallery-grid .gallery-card:nth-child(3) {
+      grid-column: 1 / -1;
+      aspect-ratio: 16/10;
+    }
     .gallery-card {
       position: relative;
       border-radius: 16px;
@@ -443,6 +447,10 @@
       <div class="gallery-card" data-anim onclick="openLightbox(this)">
         <img src="photo2.jpeg" alt="Deby" loading="lazy">
         <div class="photo-label">Trop belle 🔥</div>
+      </div>
+      <div class="gallery-card" data-anim onclick="openLightbox(this)">
+        <img src="photo3.jpeg" alt="Deby" loading="lazy">
+        <div class="photo-label">Tête de quelqu'un tchiée 💅✨</div>
       </div>
     </div>
   </section>
