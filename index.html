@@ -15,13 +15,22 @@
       color: #e8e0e0;
       overflow-x: hidden;
     }
+    #shaderBg {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.7;
+    }
 
     ::selection { background: #d6336c; color: #fff; }
 
     /* ═══════════ FLOATING HEARTS ═══════════ */
     .hearts-container {
       position: fixed; inset: 0;
-      pointer-events: none; z-index: 0; overflow: hidden;
+      pointer-events: none; z-index: 1; overflow: hidden;
     }
     .floating-heart {
       position: absolute;
@@ -41,6 +50,7 @@
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       text-align: center; position: relative; padding: 2rem;
+      z-index: 2;
     }
     .hero::before {
       content: '';
@@ -330,6 +340,8 @@
     .love-counter {
       text-align: center;
       padding: 3rem 2rem;
+      position: relative;
+      z-index: 2;
     }
     .love-counter .counter-label {
       font-size: 0.6rem;
@@ -352,6 +364,24 @@
       font-size: 1rem;
       color: #8a6a72;
       margin-top: 0.3rem;
+    }
+    .breakup-counter {
+      margin-top: 1.4rem;
+      display: inline-block;
+      padding: 1rem 1.3rem;
+      border-radius: 14px;
+      background: rgba(214, 51, 108, 0.08);
+      border: 1px solid rgba(214, 51, 108, 0.15);
+    }
+    .breakup-counter .counter-label {
+      color: #f472b6;
+    }
+    .breakup-counter .counter-value {
+      font-size: clamp(2rem, 6vw, 3.2rem);
+    }
+    .breakup-counter .counter-unit {
+      font-size: 0.9rem;
+      color: #9e7680;
     }
 
     /* ═══════════ FOOTER ═══════════ */
@@ -402,7 +432,9 @@
     }
   </style>
 </head>
-<body>
+  <body>
+
+  <canvas id="shaderBg" aria-hidden="true"></canvas>
 
   <!-- Floating hearts -->
   <div class="hearts-container" id="hearts"></div>
@@ -518,6 +550,11 @@
     <div class="counter-label">Ensemble depuis</div>
     <div class="counter-value" id="loveCounter"></div>
     <div class="counter-unit">qu'on supporte nos têtes</div>
+    <div class="breakup-counter">
+      <div class="counter-label">Compteur de rupture</div>
+      <div class="counter-value" id="breakupCounter">7</div>
+      <div class="counter-unit">mais on revient toujours 😘</div>
+    </div>
   </section>
 
   <!-- ═══════════ BIG QUOTE ═══════════ -->
@@ -556,6 +593,51 @@
 
   <!-- ═══════════ SCRIPTS ═══════════ -->
   <script>
+    // ── Animated shader-like background ──
+    const shaderCanvas = document.getElementById('shaderBg');
+    const shaderCtx = shaderCanvas.getContext('2d');
+    function resizeShaderCanvas() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      shaderCanvas.width = Math.floor(window.innerWidth * dpr);
+      shaderCanvas.height = Math.floor(window.innerHeight * dpr);
+      shaderCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    function drawHeartAura(x, y, size, alpha) {
+      shaderCtx.save();
+      shaderCtx.translate(x, y);
+      shaderCtx.scale(size, size);
+      shaderCtx.beginPath();
+      shaderCtx.moveTo(0, -0.3);
+      shaderCtx.bezierCurveTo(-0.7, -1.1, -1.9, -0.2, 0, 1.2);
+      shaderCtx.bezierCurveTo(1.9, -0.2, 0.7, -1.1, 0, -0.3);
+      shaderCtx.closePath();
+      shaderCtx.fillStyle = `rgba(214, 51, 108, ${alpha})`;
+      shaderCtx.fill();
+      shaderCtx.restore();
+    }
+    function renderShaderBackground(timeMs) {
+      const t = timeMs * 0.001;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      shaderCtx.clearRect(0, 0, w, h);
+      const pulse = 0.55 + 0.45 * Math.sin(t * 1.8);
+      const centerGrad = shaderCtx.createRadialGradient(
+        w * 0.5, h * 0.65, 20,
+        w * 0.5, h * 0.65, Math.max(w, h) * (0.65 + pulse * 0.1)
+      );
+      centerGrad.addColorStop(0, `rgba(244, 114, 182, ${0.18 + pulse * 0.1})`);
+      centerGrad.addColorStop(0.45, 'rgba(214, 51, 108, 0.12)');
+      centerGrad.addColorStop(1, 'rgba(8, 6, 10, 0)');
+      shaderCtx.fillStyle = centerGrad;
+      shaderCtx.fillRect(0, 0, w, h);
+      drawHeartAura(w * 0.25 + Math.sin(t * 0.8) * 25, h * 0.35, 28 + pulse * 8, 0.07 + pulse * 0.05);
+      drawHeartAura(w * 0.75 + Math.cos(t * 0.7) * 20, h * 0.72, 34 + pulse * 10, 0.06 + pulse * 0.04);
+      requestAnimationFrame(renderShaderBackground);
+    }
+    resizeShaderCanvas();
+    window.addEventListener('resize', resizeShaderCanvas);
+    requestAnimationFrame(renderShaderBackground);
+
     // ── Floating hearts ──
     const heartsContainer = document.getElementById('hearts');
     const heartEmojis = ['❤️', '💕', '💗', '🌹', '💖', '✨', '🩷'];
